@@ -221,14 +221,14 @@ class NN():
 
 
 
-#animaldata = pandas.read_csv(r"C:\Users\dillo\Documents\Anaconda_files\Animalqualities2.csv")
-animaldata = pandas.read_csv(r"C:\Users\dillo\Documents\Anaconda_files\iris.csv")
-X = animaldata.drop(columns=['petal.width', 'variety'])
-y = animaldata['petal.width']
+
+animaldata = pandas.read_csv(PATH_TO_SOME_EXCEL)
+X = animaldata.drop(columns=[NAME_OF_COLUMN_YOU_WANT_TO_PREDICT])
+y = animaldata[NAME_OF_COLUMN_YOU_WANT_TO_PREDICT]
 #X = animaldata.drop(columns=['Teeth'])
 #y = animaldata['Teeth']
 
 folio = NN()
-#folio.specify_structure(10, [3, 8,8 , 8, 8, 8, 8, 8, 8, 1], True)
-folio.specify_structure(3, [3, 6, 1], False)
+#folio.specify_structure(10, [3, 8, 8, 8, 8, 8, 8, 8, 8, 1], True)
+folio.specify_structure(NUMBER_OF_LAYERS, [INPUTS, HIDDEN, OUTPUTS], Can put either T of F here it doesnt matter yet)
 folio.train(X, y)
