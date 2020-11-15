@@ -1,7 +1,7 @@
 import numpy
 import random
 import pandas
-
+import matplotlib.pyplot as mpl
 
 class NN():
 
@@ -14,8 +14,10 @@ class NN():
         self.biases = []
         self.defaultbias = 0
         self.linear = linear
-        self.desiredepochs = 10000
+        self.desiredepochs = 8000
 
+        self.principle = 0.35
+        self.LR = self.principle
         standin = []
         for layer in range(layernumber):
             layernodevalues = []
@@ -46,9 +48,11 @@ class NN():
         return (self.weightsforward)
 
     def train(self, X, y):
-
+        
         self.X = X.to_numpy()
         self.y = y.to_numpy()
+        firsterror = 1
+
 
         def sigmoid_crusher(invalue):
             return (1 / (1 + numpy.e ** (-invalue)))
@@ -120,7 +124,7 @@ class NN():
         # print("error" + str(self.errornodes[-1]))
 
         def adjust_weights():
-            LR = 0.1
+            LR = self.LR
 
             for layer in range(1, len(self.presquishes)):
                 # print("ERROR")
@@ -132,9 +136,13 @@ class NN():
                         self.weightsforward[layer - 1][weightbatch][ind] + LR * self.errornodes[layer][ind] *
                         self.nodevalues[layer - 1][weightbatch] for ind in
                         range(len(self.weightsforward[layer - 1][weightbatch]))]
+                self.biases[layer - 1] = sum([LR*self.errornodes[layer][indie] for indie in range(len(self.errornodes[layer]))])
+
+
+                    #self.biases[layer] += LR*self.errornodes[layer][ind] for ind in
 
                     # self.biases[layer - 1] = [self.biases[weightbatch] + LR*self.errornodes[layer][weightbatch]]
-                    # self.biases[layer - 1] += LR*self.errornodes[layer][weightbatch]*self.presquishes[layer-1][weightbatch]
+                    #self.biases[layer - 1] += LR*self.errornodes[layer][weightbatch]*self.presquishes[layer-1][weightbatch]
                 #self.biases[layer - 1] += sum(LR*self.errornodes[layer][ind]*self.presquishes[layer][ind] for ind in range(len(self.errornodes[layer])))
 
         # adjust_weights()
@@ -172,12 +180,15 @@ class NN():
             self.errornodes = [x[:] for x in self.blankerrors]
             self.nodevalues = [x[:] for x in self.blanknodes]
 
-
+        errors = []
+        epochs = [x for x in range(self.desiredepochs)]
         for epoch in range(self.desiredepochs):
 
             defaultnodeweights = [x[:] for x in self.weightsforward]
+            defaultbiases = self.biases[:]
 
             weightchanges = []
+            biaschanges = []
             epocherror = 0
             for element in range(len(self.X)):
                 errorrr = forwardprop(self.nodevalues, self.weightsforward, self.biases, self.X[element],
@@ -186,9 +197,11 @@ class NN():
                 backpropagation([errorrr], self.weightsforward, self.biases)
                 adjust_weights()
                 weightchanges.append(self.weightsforward)
+                biaschanges.append(self.biases)
                 self.errornodes = [x[:] for x in self.blankerrors]
                 self.nodevalues = [x[:] for x in self.blanknodes]
                 self.weightsforward = [x[:] for x in defaultnodeweights]
+                self.biases = defaultbiases[:]
             #print(self.weightsforward)
             #print(len(self.weightsforward))
             for layer in range(len(self.weightsforward)):
@@ -198,11 +211,19 @@ class NN():
                     for individualweight in range(len(self.weightsforward[layer][weightbatch])):
                         #print(self.weightsforward[layer][nodeweightbatch][individualweight])
                         self.weightsforward[layer][weightbatch][individualweight] = numpy.mean([weightchanges[x][layer][weightbatch][individualweight] for x in range(len(weightchanges))])
+                self.biases[layer] = numpy.mean([biaschanges[x][layer] for x in range(len(biaschanges))])
 
-
+            if epoch == 0:
+                firsterror = epocherror
+            self.LR = (epocherror/firsterror) * self.principle
             print(epocherror)
 
+            errors.append(epocherror)
 
+
+
+        errordropplot = mpl.plot(epochs, errors)
+        mpl.show(errordropplot)
 
 
 
@@ -215,9 +236,12 @@ class NN():
             forwardprop(self.nodevalues, self.weightsforward, self.biases, self.X[testdatapoint], self.y[testdatapoint])
 
             print(self.nodevalues[-1])
+            #print(self.X[testdatapoint])
+            #print(testdatapoint + 2)
 
             #print(self.weightsforward)
             self.nodevalues = [x[:] for x in self.blanknodes]
+
 
 
 
