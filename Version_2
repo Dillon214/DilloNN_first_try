@@ -4,9 +4,18 @@ import pandas
 import matplotlib.pyplot as mpl
 
 
+#This is a neural network for predicting numerical values.
+#Although I referenced a guide for specifics of neural network functionality (such as how biases and weights are calculated), the code is all original. 
+
+
+
+
+
+
+
 class NN():
 
-    def specify_structure(self, layernumber, nodesperlayer, linear):
+    def specify_structure(self, layernumber, nodesperlayer, epochs, Learning_rate):
 
         self.layernumber = layernumber
         self.numberofnodesperlayer = nodesperlayer
@@ -14,10 +23,9 @@ class NN():
         self.weightsforward = []
         self.biases = []
         self.defaultbias = 0
-        self.linear = linear
-        self.desiredepochs = 10000
 
-        self.principle = 0.005
+        self.desiredepochs = epochs
+        self.principle = Learning_rate
         self.LR = self.principle
         standin = []
         for layer in range(layernumber):
@@ -30,7 +38,7 @@ class NN():
 
                     for nextlayersize in range(nodesperlayer[layer + 1]):
                         nodeweights.append(random.gauss(0, 1))
-                        # nodeweights.append(random.randint(0,100)/100)
+
                 layerweights.append(nodeweights)
                 layernodevalues.append(0)
             standin.append(layernodevalues)
@@ -50,6 +58,8 @@ class NN():
 
     def train(self, X, y):
 
+        self.inputcolumns = X.columns
+        self.outputcolumns = y.columns
         self.X = X.to_numpy()
         self.y = y.to_numpy()
 
@@ -72,7 +82,6 @@ class NN():
             return (1 / (1 + numpy.e ** (-invalue)))
 
         def multall(inputarray, weightsforward):
-            # out = [0 for g in weightsforward[0]]
 
             out = [0 for g in weightsforward[0]]
             for input in range(len(inputarray)):
@@ -95,8 +104,7 @@ class NN():
                 else:
                     self.presquishes[layer + 1] = addup
                     self.nodevalues[layer + 1] = [sigmoid_crusher(x) for x in addup]
-                # self.nodevalues[layer+1] = [sigmoid_crusher(x + self.biases[layer]) for x in multall(self.nodevalues[layer], self.weightsforward[layer])]
-            # alterror = [desiredoutputs[x] - self.nodevalues[-1][x] for x in range()]
+
 
             alterror = desiredoutputs - self.nodevalues[-1]
 
@@ -106,7 +114,6 @@ class NN():
             return (output * (1 - output))
 
         def multback(weights, outputs, error):
-            # find errors of previous node layer
 
             errorslala = [0 for x in outputs]
             for inerror in range(len(error)):
@@ -128,90 +135,30 @@ class NN():
                                                                self.nodevalues[layerbackwards - 1],
                                                                self.errornodes[layerbackwards])
 
-        # def update_weights():
-
-        # erroror = forwardprop(self.nodevalues, self.weightsforward, self.biases, self.X[1], self.y[1])
-
-        # print(backpropagation([erroror], self.weightsforward, self.biases))
-        # print(self.errornodes)
-        # print("error" + str(self.errornodes[-1]))
-
         def adjust_weights():
             LR = self.LR
 
             for layer in range(1, len(self.presquishes)):
 
-                # print("ERROR")
-                # print(self.errornodes)
-                # print("PRE")
-                # print(self.presquishes)
                 for weightbatch in range(len(self.weightsforward[layer - 1])):
                     self.weightsforward[layer - 1][weightbatch] = [
                         self.weightsforward[layer - 1][weightbatch][ind] + LR * self.errornodes[layer][ind] *
                         self.nodevalues[layer - 1][weightbatch] for ind in
                         range(len(self.weightsforward[layer - 1][weightbatch]))]
-                self.biases[layer - 1] += sum(
-                    [LR * self.errornodes[layer][indie] for indie in range(len(self.errornodes[layer]))])
+                self.biases[layer - 1] -= LR * sum(
+                    [self.errornodes[layer][indie] for indie in range(len(self.errornodes[layer]))])
 
-                # self.biases[layer] += LR*self.errornodes[layer][ind] for ind in
-
-                # self.biases[layer - 1] = [self.biases[weightbatch] + LR*self.errornodes[layer][weightbatch]]
-                # self.biases[layer - 1] += LR*self.errornodes[layer][weightbatch]*self.presquishes[layer-1][weightbatch]
-                # self.biases[layer - 1] += sum(LR*self.errornodes[layer][ind]*self.presquishes[layer][ind] for ind in range(len(self.errornodes[layer])))
-
-        # adjust_weights()
-        # self.errornodes = [x[:] for x in self.blankerrors]
-        # self.nodevalues = [x[:] for x in self.blanknodes]
-        # onglo = forwardprop(self.nodevalues, self.weightsforward, self.biases, self.X[1], self.y[1])
-        # backpropagation([onglo], self.weightsforward, self.biases)
-        # print("error" + str(self.errornodes[-1]))
-
-        while True:
-            break
-            errorrr = forwardprop(self.nodevalues, self.weightsforward, self.biases, self.X[2], self.y[2])
-            backpropagation([errorrr], self.weightsforward, self.biases)
-            # print("error" + str(self.errornodes[-1]))
-            # print(self.errornodes)
-            # print(self.errornodes[-1][0])
-            # print("")
-            # print("")
-            # print("")
-            print("errors")
-            print(self.errornodes)
-            print("")
-            print("nodes")
-            print(self.nodevalues)
-            print("")
-            print("weights")
-            print(self.weightsforward)
-            print("")
-            print("")
-            print("")
-
-            # print(self.weightsforward)
-
-            adjust_weights()
-            self.errornodes = [x[:] for x in self.blankerrors]
-            self.nodevalues = [x[:] for x in self.blanknodes]
 
         errors = []
         epochs = [x for x in range(self.desiredepochs)]
         for epoch in range(self.desiredepochs):
             print(epoch)
-
-            # defaultnodeweights = [x[:] for x in self.weightsforward]
-
-            # defaultbiases = self.biases[:]
-
             defaultnodeweights = depthling(self.weightsforward)
-
             defaultbiases = depthling(self.biases)
-
             weightchanges = []
             biaschanges = []
             epocherror = 0
             for element in range(len(self.X)):
-                # print("element" + str(element))
                 errorrr = forwardprop(self.nodevalues, self.weightsforward, self.biases, self.X[element],
                                       self.y[element])
 
@@ -220,50 +167,21 @@ class NN():
                 minibiaschanges = []
 
                 for errorpart in range(len(errorrr)):
-
-
                     submission = [0 for j in errorrr]
                     submission[errorpart] = errorrr[errorpart]
-
                     backpropagation(submission, self.weightsforward, self.biases)
-
-                    # print("nodes:")
-                    # print(self.nodevalues)
-                    # print("")
-                    # print("errors:")
-                    # print(self.errornodes)
-                    # print("")
-                    # print("desiredvalue")
-                    # print(self.y[element][errorpart])
-                    # print("")
-                    # print(errorpart)
-                    # print(self.errornodes)
-                    # print("beforeweights")
-                    # print(self.weightsforward)
-                    # print("")
-
                     adjust_weights()
-
-                    # print("weights:")
-                    # print(self.weightsforward)
-                    # print("")
-
                     miniweightchanges.append(self.weightsforward)
                     minibiaschanges.append(self.biases)
-
                     self.errornodes = [x[:] for x in self.blankerrors]
-
                     self.weightsforward = [x[:] for x in defaultnodeweights]
                     self.biases = defaultbiases[:]
-
-                # HERE
 
                 miniweightchanges = ADDtogether(miniweightchanges, len(miniweightchanges))
 
                 minibiaschanges = ADDtogether(minibiaschanges, len(minibiaschanges))
 
-                # print(minibiaschanges)
-                # print(epoch)
+
                 weightchanges.append(miniweightchanges)
                 biaschanges.append(minibiaschanges)
 
@@ -276,44 +194,62 @@ class NN():
 
             self.weightsforward = ADDtogether(weightchanges, len(weightchanges))
 
-            # if epoch == 0:
-            # firsterror = epocherror
-            # self.LR = (epocherror / firsterror) * self.principle
-            # FIIIIIIIIIIIIIIIIIIIIIIIIIIIIXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
             errors.append(epocherror)
             print(epocherror)
 
-        # errordropplot = mpl.plot(epochs, errors)
-        # mpl.show(errordropplot)
+
+        errordropplot = mpl.plot(epochs, errors)
+        mpl.show(errordropplot)
+
 
         while True:
             want_another_test = input("Test_again?: ")
             if want_another_test == "n":
                 break
-
+            elif want_another_test == "c":
+                custominput = []
+                blankoutput = []
+                for g in range(len(self.inputcolumns)):
+                    custominput.append(float(input("Enter a value of column: " + self.inputcolumns[g])))
+                    blankoutput.append(0)
+                forwardprop(self.nodevalues, self.weightsforward, self.biases, custominput, numpy.array(blankoutput))
+                print(custominput)
+                print(self.nodevalues[-1])
+                self.nodevalues = [x[:] for x in self.blanknodes]
+                continue
             testdatapoint = random.randint(0, len(self.X) - 1)
             print("input" + str(self.X[testdatapoint]))
             print("desired_output " + str(self.y[testdatapoint]))
             forwardprop(self.nodevalues, self.weightsforward, self.biases, self.X[testdatapoint], self.y[testdatapoint])
             print(self.nodevalues[-1])
 
-            # print(self.X[testdatapoint])
-            # print(testdatapoint + 2)
 
-            # print(self.weightsforward)
             self.nodevalues = [x[:] for x in self.blanknodes]
 
 
 
+#DATA IMPORT AND NETWORK CUSTOMIZATION
 
+#Enter path to your training data below.
+animaldata = pandas.read_csv(r"C:\Users\dillo\Documents\Anaconda_files\irisvs.csv")
 folio = NN()
-# folio.specify_structure(10, [3, 8,8 , 8, 8, 8, 8, 8, 8, 1], True)
-folio.specify_structure(4, [2, 24, 24, 2], False)
 
-animaldata = pandas.read_csv(r"C:\Users\dillo\Documents\Anaconda_files\agesex.csv")
-X = animaldata.drop(columns=['weight', 'sex', 'poggy', 'noggy'])
-# y = animaldata['poggy']
-y = animaldata.drop(columns=['weight', 'sex', 'age', 'height'])
+#Enter column names you want the network to know.
+Selected_Inputs = ['sepal_length', 'sepal_width']
+
+#Enter column names you want the network to ultimately predict.
+Selected_Outputs = ['petal_length', 'petal_width']
+
+#Enter information for internal node structure, desired epochs, and learning rate. 
+folio.specify_structure(4, [len(Selected_Inputs), 20,20, len(Selected_Outputs)], 4000, .06)
+
+
+X = animaldata.drop(columns= animaldata.columns.drop(Selected_Inputs))
+y = animaldata.drop(columns= animaldata.columns.drop(Selected_Outputs))
+
+print(X)
+print(y)
 folio.train(X, y)
 
