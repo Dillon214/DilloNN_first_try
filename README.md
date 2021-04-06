@@ -3,5 +3,5 @@ Neural network builder/trainer. I wrote this simply to explore the algorithm mor
 
 Version 2 can have multiple output nodes, and an error in calculating bias was fixed.  
 
-Version 3 handles all elements in arrays ather than individually. Thhis boosts overall speed by a factor of how ever many elements are being handled. 
+Version 3 handles all elements in arrays rather than individually. Thhis boosts overall speed by a factor of how ever many elements are being handled. 
 Output nodes are still exclusively linear.
