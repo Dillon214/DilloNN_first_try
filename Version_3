@@ -1,0 +1,294 @@
+import numpy
+import random
+import pandas
+import matplotlib.pyplot as mpl
+import datetime
+
+
+# This is a neural network for predicting numerical values.
+# Although I referenced a guide for specifics of neural network functionality (such as how biases and weights are calculated), the code is all original.
+# This versios, unlike previous ones, uses numpy arrays to handle all elements simultaneosly, boosting overall speed.
+
+
+
+class NN():
+
+    def specify_structure(self, layernumber, nodesperlayer, epochs, Learning_rate):
+
+        self.layernumber = layernumber
+        self.numberofnodesperlayer = nodesperlayer
+        self.nodevalues = []
+        self.weightsforward = []
+        self.biases = []
+        self.defaultbias = 0
+
+        self.desiredepochs = epochs
+        self.principle = Learning_rate
+        self.LR = self.principle
+        standin = []
+        for layer in range(layernumber):
+            layernodevalues = []
+            layerweights = []
+
+            for node in range(nodesperlayer[layer]):
+                nodeweights = []
+                if not layer + 1 == layernumber:
+
+                    for nextlayersize in range(nodesperlayer[layer + 1]):
+                        nodeweights.append(random.gauss(0, 1))
+
+                layerweights.append(nodeweights)
+                layernodevalues.append(0)
+            standin.append(layernodevalues)
+            self.weightsforward.append(layerweights)
+
+            self.biases.append(self.defaultbias)
+        self.nodevalues = [x[:] for x in standin]
+        self.blanknodes = [x[:] for x in standin]
+        self.presquishes = [x[:] for x in standin]
+
+        self.errornodes = [x[:] for x in standin]
+        self.blankerrors = [x[:] for x in standin]
+
+
+    def returnanything(self):
+        return (self.weightsforward)
+
+    def train(self, X, y):
+        time1 = datetime.datetime.today()
+        self.inputcolumns = X.columns
+        self.outputcolumns = y.columns
+        self.X = X.to_numpy()
+        self.y = y.to_numpy()
+
+        firsterror = 1
+
+        def ADDtogether(inputs, numsies):
+
+            if (type(inputs[0]) != type([])):
+                return (sum(inputs)) / numsies
+
+            return ([ADDtogether([inputs[x][y] for x in range(numsies)], numsies) for y in range(len(inputs[0]))])
+
+        def depthling(input):
+
+            if len(input) == 0 or type(input[0]) != type([]):
+                return (input[:])
+            return ([depthling(x) for x in input])
+
+        def avling(input):
+
+            try:
+
+                input[0][0]
+            except:
+
+
+
+
+                try:
+                    return (numpy.mean(input[:]))
+                except:
+                    return input
+            return ([avling(x) for x in input])
+
+
+        def sigmoid_crusher(invalue):
+            return (1 / (1 + numpy.e ** (-invalue)))
+
+        def multall(inputarray, weightsforward):
+
+            out = [0 for g in weightsforward[0]]
+            for input in range(len(inputarray)):
+                toadd = [inputarray[input] * g for g in weightsforward[input]]
+                out = [out[g] + toadd[g] for g in range(len(out))]
+
+            return (out)
+
+
+
+
+
+
+        def forwardprop(nodes, weights, biases, inputs, desiredoutputs):
+
+            inputs = [inputs[:, x] for x in range(len(inputs[0]))]
+            desiredoutputs = [desiredoutputs[:, x] for x in range(len(desiredoutputs[0]))]
+            for layer in range(len(nodes) - 1):
+                if layer == 0:
+                    self.nodevalues[layer] = inputs
+
+                addup = [x + self.biases[layer] for x in multall(self.nodevalues[layer], self.weightsforward[layer])]
+                if layer == len(nodes) - 2:
+
+                    self.nodevalues[layer + 1] = addup
+                    self.presquishes[layer + 1] = addup
+                else:
+                    self.presquishes[layer + 1] = addup
+                    self.nodevalues[layer + 1] = [sigmoid_crusher(x) for x in addup]
+
+            alterror = numpy.array(desiredoutputs) - numpy.array(self.nodevalues[-1])
+
+            return (alterror)
+
+        def sigma_derivative(output):
+            return (output * (1 - output))
+
+        def multback(weights, outputs, error):
+
+            errorslala = [0 for x in outputs]
+            for inerror in range(len(error)):
+                toadd = [(error[inerror] * weights[x][inerror]) * sigma_derivative(outputs[x]) for x in
+                         range(len(weights))]
+
+                errorslala = [toadd[b] + errorslala[b] for b in range(len(toadd))]
+
+            return (errorslala)
+
+        def backpropagation(errors, weights, biases):
+
+            for layerbackwards in range(1, len(self.errornodes)).__reversed__():
+
+                if layerbackwards == len(self.errornodes) - 1:
+                    self.errornodes[layerbackwards] = errors
+
+                self.errornodes[layerbackwards - 1] = multback(self.weightsforward[layerbackwards - 1],
+                                                               self.nodevalues[layerbackwards - 1],
+                                                               self.errornodes[layerbackwards])
+
+        def adjust_weights():
+            LR = self.LR
+
+            for layer in range(1, len(self.presquishes)):
+
+                for weightbatch in range(len(self.weightsforward[layer - 1])):
+                    self.weightsforward[layer - 1][weightbatch] = [
+                        self.weightsforward[layer - 1][weightbatch][ind] + LR * self.errornodes[layer][ind] *
+                        self.nodevalues[layer - 1][weightbatch] for ind in
+                        range(len(self.weightsforward[layer - 1][weightbatch]))]
+                self.biases[layer - 1] -= LR * sum(
+                    [self.errornodes[layer][indie] for indie in range(len(self.errornodes[layer]))])
+
+        errors = []
+        epochs = [x for x in range(self.desiredepochs)]
+        epochmark = self.desiredepochs*0.05
+        for epoch in range(self.desiredepochs):
+            if epoch%epochmark == 0:
+                print(str(epoch/epochmark * 5) + "%")
+
+            defaultnodeweights = depthling(self.weightsforward)
+
+            defaultbiases = depthling(self.biases)
+            weightchanges = []
+            biaschanges = []
+
+            errorrr = forwardprop(self.nodevalues, self.weightsforward, self.biases, self.X,
+                                  self.y)
+
+            epocherror = [sum(numpy.abs(x)) for x in errorrr]
+
+
+
+
+            miniweightchanges = []
+            minibiaschanges = []
+
+
+            for errorpart in range(len(errorrr)):
+
+                submission = [numpy.zeros_like(errorrr[0]) for j in errorrr]
+
+                submission[errorpart] = errorrr[errorpart]
+
+                backpropagation(submission, self.weightsforward, self.biases)
+                adjust_weights()
+
+                miniweightchanges.append(self.weightsforward)
+
+                minibiaschanges.append(self.biases)
+
+                self.errornodes = [x[:] for x in self.blankerrors]
+                self.weightsforward = [x[:] for x in defaultnodeweights]
+                self.biases = defaultbiases[:]
+
+            #testerbias = numpy.mean(numpy.array(minibiaschanges), axis=0)
+            #testerweights =  numpy.mean(numpy.array(miniweightchanges, dtype=object), axis=0, )
+
+            miniweightchanges = ADDtogether(miniweightchanges, len(miniweightchanges))
+
+            minibiaschanges = ADDtogether(minibiaschanges, len(minibiaschanges))
+
+
+
+
+            weightchanges.append(miniweightchanges)
+            biaschanges.append(minibiaschanges)
+
+            self.errornodes = [x[:] for x in self.blankerrors]
+            self.nodevalues = [x[:] for x in self.blanknodes]
+            self.weightsforward = [x[:] for x in defaultnodeweights]
+            self.biases = defaultbiases[:]
+
+
+
+            #self.biases = ADDtogether(biaschanges, len(biaschanges))
+            #self.weightsforward = ADDtogether(weightchanges, len(weightchanges))
+            self.biases = avling(minibiaschanges)
+            self.weightsforward = avling(miniweightchanges)
+            self.weightsforward[-1] = [[] for x in self.nodevalues[-1]]
+
+
+
+            errors.append(epocherror)
+
+        time2 = datetime.datetime.today()
+        print("Time elapsed: " + str(time2 - time1))
+        errordropplot = mpl.plot(epochs, errors)
+        mpl.show()
+
+        while True:
+            want_another_test = input("Test_again?: ")
+            if want_another_test == "n":
+                break
+            elif want_another_test == "c":
+                custominput = []
+                blankoutput = []
+                for g in range(len(self.inputcolumns)):
+                    custominput.append(float(input("Enter a value of column: " + self.inputcolumns[g])))
+                    blankoutput.append(0)
+                forwardprop(self.nodevalues, self.weightsforward, self.biases, custominput, numpy.array(blankoutput))
+                print(custominput)
+                print(self.nodevalues[-1])
+                self.nodevalues = [x[:] for x in self.blanknodes]
+                continue
+            testdatapoint = random.randint(0, len(self.X) - 1)
+            print("input" + str(self.X[testdatapoint]))
+            print("desired_output " + str(self.y[testdatapoint]))
+            forwardprop(self.nodevalues, self.weightsforward, self.biases, numpy.array([self.X[testdatapoint]]), numpy.array([self.y[testdatapoint]]))
+            print(self.nodevalues[-1])
+
+            self.nodevalues = [x[:] for x in self.blanknodes]
+
+
+# DATA IMPORT AND NETWORK CUSTOMIZATION
+
+# Enter path to your training data below.
+animaldata = pandas.read_csv(r"C:\Users\dillo\Documents\Anaconda_files\irisvs.csv")
+folio = NN()
+
+# Enter column names you want the network to know.
+Selected_Inputs = ['sepal_length', 'sepal_width', 'petal_length']
+
+# Enter column names you want the network to ultimately predict.
+Selected_Outputs = ['petal_width']
+
+# Enter information for internal node structure, desired epochs, and learning rate.
+folio.specify_structure(5, [len(Selected_Inputs), 30, 30, 30, len(Selected_Outputs)], 10000, .05)
+
+X = animaldata.drop(columns=animaldata.columns.drop(Selected_Inputs))
+y = animaldata.drop(columns=animaldata.columns.drop(Selected_Outputs))
+
+print(X)
+print(y)
+folio.train(X, y)
+
